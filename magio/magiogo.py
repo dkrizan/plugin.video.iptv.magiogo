@@ -2,6 +2,7 @@ import datetime
 import random
 import time
 import requests
+from urllib.parse import urlparse
 
 try:
     from typing import List
@@ -14,7 +15,7 @@ from requests.adapters import HTTPAdapter
 from iptv.client import IPTVClient, UserNotDefinedException, Channel, StreamInfo, Programme, UserInvalidException, dummy_progress, \
     NetConnectionError
 
-UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36'
+UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0'
 
 
 class MagioGoException(Exception):
@@ -46,9 +47,9 @@ class MagioGoRecording:
 
 
 class MagioQuality:
-    low = 'p1'
+    low = 'p0',
     medium = 'p2'
-    high = 'p3'
+    high = 'p4'
     extra = 'p5'
 
     @staticmethod
@@ -119,7 +120,7 @@ class MagioGo(IPTVClient):
             self._post('https://skgo.magio.tv/v2/auth/init',
                        params={'dsid': 'Netscape.' + str(int(time.time())) + '.' + str(random.random()),
                                'deviceName': self._device,
-                               'deviceType': 'OTT_ANDROID',
+                               'deviceType': 'OTT_SKYWORTH_STB',
                                'osVersion': '0.0.0',
                                'appVersion': '0.0.0',
                                'language': 'SK'},
@@ -159,23 +160,42 @@ class MagioGo(IPTVClient):
 
         return ret
 
-    def channel_stream_info(self, channel_id, programme_id=None):
+    def get_stream_info(self, channel_id, service="LIVE"):
         self._login()
         resp = self._get('https://skgo.magio.tv/v2/television/stream-url',
-                         params={'service': 'LIVE', 'name': self._device, 'devtype': 'OTT_ANDROID',
-                                 'id': channel_id, 'prof': self._quality, 'ecid': '', 'drm': 'verimatrix'},
+                         params={'service': service,
+                                 'name': self._device,
+                                 'devtype': 'OTT_SKYWORTH_STB',
+                                 'id': channel_id,
+                                 'prof': self._quality,
+                                 'ecid': '',
+                                 'drm': 'verimatrix'},
                          headers=self._auth_headers())
         si = StreamInfo()
         si.url = resp['url']
+        headers = {"Host": urlparse(si.url).netloc, "User-Agent": "ReactNativeVideo/3.13.2 (Linux;Android 10) ExoPlayerLib/2.10.3", "Connection": "Keep-Alive"}
+        req = requests.get(si.url, headers = headers, allow_redirects=False)
+        si.url = req.headers["location"]
         si.manifest_type = 'mpd' if si.url.find('.mpd') > 0 else 'm3u'
         si.user_agent = UA
         return si
 
+    def channel_stream_info(self, channel_id, programme_id=None):
+        return self.get_stream_info(channel_id)
+
+    def channel_back_play_stream_info(self, channel_id):
+        return self.get_stream_info(channel_id, "TIMESHIFT")
+
     def programme_stream_info(self, programme_id):
         self._login()
         resp = self._get('https://skgo.magio.tv/v2/television/stream-url',
-                         params={'service': 'ARCHIVE', 'name': self._device, 'devtype': 'OTT_ANDROID',
-                                 'id': programme_id, 'prof': self._quality, 'ecid': '', 'drm': 'verimatrix'},
+                         params={'service': 'ARCHIVE',
+                                 'name': self._device,
+                                 'devtype': 'OTT_SKYWORTH_STB',
+                                 'id': programme_id,
+                                 'prof': self._quality,
+                                 'ecid': '',
+                                 'drm': 'verimatrix'},
                          headers=self._auth_headers())
         si = StreamInfo()
         si.url = resp['url']
