@@ -2,7 +2,7 @@ import datetime
 import random
 import time
 import requests
-from urllib.parse import urlparse
+from urlparse import urlparse
 
 try:
     from typing import List
@@ -120,7 +120,7 @@ class MagioGo(IPTVClient):
             self._post('https://skgo.magio.tv/v2/auth/init',
                        params={'dsid': 'Netscape.' + str(int(time.time())) + '.' + str(random.random()),
                                'deviceName': self._device,
-                               'deviceType': 'OTT_SKYWORTH_STB',
+                               'deviceType': 'OTT_WIN',
                                'osVersion': '0.0.0',
                                'appVersion': '0.0.0',
                                'language': 'SK'},
