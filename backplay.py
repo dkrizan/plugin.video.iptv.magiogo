@@ -4,7 +4,7 @@ import xbmc
 import xbmcgui
 
 from magio.addon import MagioGoAddon
-from magio.magiogo import MagioGo
+from magio.magiogo import MagioGo, MagioGoException
 
 
 # sys.argv = list(lambda arg: arg.decode('utf-8'), sys.argv)
@@ -13,7 +13,20 @@ client = addon.client # type: MagioGo
 channelName = xbmc.getInfoLabel('ListItem.ChannelName')
 channels = client.channels()
 channelId = {ch.id for ch in channels if ch.name == channelName}
-stream = client.channel_back_play_stream_info(channelId)
+try:
+    stream = client.channel_back_play_stream_info(channelId)
+except MagioGoException as e:
+    if e.id == 'DEVICE_MAX_LIMIT':
+        if addon.getSetting('reuse_last_device') == 'true':
+            device = client.devices()[0]
+        else:
+            device = addon.select_device()
+
+        if device != '':
+            client.disconnect_device(device.id)
+        stream = client.channel_back_play_stream_info(channelId)
+    else:
+        raise e
 
 xbmc.log("Backplay stream url: " + stream.url, level=xbmc.LOGINFO)
 

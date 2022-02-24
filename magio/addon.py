@@ -37,7 +37,7 @@ class MagioGoAddon(IPTVAddon):
     def programme_stream_info(self, programme_id):
         return self._call(lambda: self.client.programme_stream_info(programme_id))
 
-    def _select_device(self):
+    def select_device(self):
         devices = [d for d in self.client.devices() if not d.is_this]
         dialog = xbmcgui.Dialog()
         items = []
@@ -55,7 +55,7 @@ class MagioGoAddon(IPTVAddon):
                 if self.getSetting('reuse_last_device') == 'true':
                     device = self.client.devices()[0]
                 else:
-                    device = self._select_device()
+                    device = self.select_device()
 
                 if device != '':
                     self.client.disconnect_device(device.id)
