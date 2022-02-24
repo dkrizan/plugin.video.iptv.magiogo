@@ -12,10 +12,10 @@ addon = MagioGoAddon()
 client = addon.client # type: MagioGo
 channelName = xbmc.getInfoLabel('ListItem.ChannelName')
 channels = client.channels()
-channelId = {ch.id for ch in channels if ch.name == channelName}
+channelId = {ch.id for ch in channels if ch.name == channelName.decode('utf-8')}
 stream = client.channel_back_play_stream_info(channelId)
 
-xbmc.log("Backplay stream url: " + stream.url, level=xbmc.LOGINFO)
+xbmc.log("Backplay stream url: " + stream.url, level=xbmc.LOGNOTICE)
 
 #Player Stream
 channel_name = xbmc.getInfoLabel('ListItem.ChannelName').replace("*", "")
